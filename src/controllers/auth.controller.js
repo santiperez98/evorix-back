@@ -4,15 +4,22 @@ const { User } = require('../models/User');
 require('dotenv').config();
 
 const register = async (req, res) => {
-    try {
-      const { username, email, password, role } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await User.create({ username, email, password: hashedPassword, role });
-      res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  try {
+    const { username, email, password, role } = req.body;
+    
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: "El email ya está registrado" });
     }
-  };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ username, email, password: hashedPassword, role });
+    res.status(201).json({ message: "Usuario registrado correctamente" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
   
   const login = async (req, res) => {
     try {
