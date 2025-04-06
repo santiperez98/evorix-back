@@ -29,7 +29,16 @@ const register = async (req, res) => {
     const payload = { id: user.id, name: user.name, email: user.email };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(201).json({ token, user });
+    // 🔐 Guardamos el token en una cookie
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 3600000,
+      })
+      .status(201)
+      .json({ user });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error en el servidor');
@@ -53,11 +62,34 @@ const login = async (req, res) => {
     const payload = { id: user.id, name: user.name, email: user.email };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({ token, user });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 3600000,
+      })
+      .json({ user });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error en el servidor');
   }
 };
 
-module.exports = { register, login };
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error en /me:", error);
+    res.status(500).json({ msg: "Error al obtener los datos del usuario" });
+  }
+};
+
+
+module.exports = { register, login, getMe };

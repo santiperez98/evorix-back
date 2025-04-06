@@ -2,9 +2,12 @@ const express = require('express');
 const { check } = require('express-validator');
 const passport = require('../config/passport');
 const { register, login } = require('../controllers/auth.controller');
-const User = require('../models/User'); // solo si exportás el modelo directo
-const router = express.Router();
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const verifyToken = require("../middlewares/authMiddleware.js");
+const router = express.Router();
+const { getMe } = require("../controllers/auth.controller");
+// Register
 router.post(
   '/register',
   [
@@ -15,27 +18,41 @@ router.post(
   register
 );
 
+// Login
 router.post('/login', login);
 
-// Ruta para iniciar sesión con Google
+// Google login - inicio
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Ruta de callback después de la autenticación
+// Google callback
 router.get(
   '/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // Generar token JWT
     const token = jwt.sign({ id: req.user.id, email: req.user.email }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
 
-    res.json({ token, user: req.user });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 3600000,
+      })
+      .redirect('/'); // o respondé con JSON si estás en API
   }
 );
 
+// Google login manual (por front)
 router.post('/google', async (req, res) => {
+  console.log("Body recibido en /google:", req.body); // 👈 AGREGÁ ESTE
+
   const { email, name } = req.body;
+
+  if (!email || !name) {
+    return res.status(400).json({ msg: "Faltan datos del usuario de Google" });
+  }
 
   try {
     let user = await User.findOne({ where: { email } });
@@ -44,7 +61,7 @@ router.post('/google', async (req, res) => {
       user = await User.create({
         name,
         email,
-        googleId: "google_" + Math.random().toString(36).substring(7), // o pasás el ID real
+        googleId: "google_" + Math.random().toString(36).substring(7),
       });
     }
 
@@ -52,11 +69,28 @@ router.post('/google', async (req, res) => {
       expiresIn: '1h',
     });
 
-    res.json({ token, user });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 3600000,
+      })
+      .json({ user });
   } catch (err) {
     console.error("Error en login con Google:", err);
     res.status(500).json({ msg: "Error en el login con Google" });
   }
 });
+
+
+// 🔓 Logout (cerrar sesión)
+router.post('/logout', (req, res) => {
+  res.clearCookie('token').json({ msg: 'Sesión cerrada correctamente' });
+});
+
+router.get("/me", verifyToken, getMe);
+
+
 
 module.exports = router;
