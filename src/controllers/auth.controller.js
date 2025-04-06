@@ -9,7 +9,7 @@ const register = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   try {
     let user = await User.findOne({ where: { email } });
@@ -23,7 +23,8 @@ const register = async (req, res) => {
     user = await User.create({
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role
     });
 
     const payload = { id: user.id, name: user.name, email: user.email };
@@ -91,5 +92,14 @@ const getMe = async (req, res) => {
   }
 };
 
+const logout = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
+  });
+  res.status(200).json({ msg: 'Sesión cerrada con éxito' });
+};
 
-module.exports = { register, login, getMe };
+
+module.exports = { register, login, getMe, logout };

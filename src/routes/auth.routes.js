@@ -46,7 +46,7 @@ router.get(
 
 // Google login manual (por front)
 router.post('/google', async (req, res) => {
-  console.log("Body recibido en /google:", req.body); // 👈 AGREGÁ ESTE
+  console.log("Body recibido en /google:", req.body); // 👈 DEBUG
 
   const { email, name } = req.body;
 
@@ -61,7 +61,7 @@ router.post('/google', async (req, res) => {
       user = await User.create({
         name,
         email,
-        googleId: "google_" + Math.random().toString(36).substring(7),
+        googleId: "google_" + Math.random().toString(36).substring(7), // sólo para crear un ID si no viene de Google directamente
       });
     }
 
@@ -76,7 +76,7 @@ router.post('/google', async (req, res) => {
         sameSite: "Lax",
         maxAge: 3600000,
       })
-      .json({ user });
+      .json({ user, token }); // 👉 devolvé el token también si lo vas a usar en headers del front
   } catch (err) {
     console.error("Error en login con Google:", err);
     res.status(500).json({ msg: "Error en el login con Google" });
@@ -84,9 +84,10 @@ router.post('/google', async (req, res) => {
 });
 
 
-// 🔓 Logout (cerrar sesión)
+// auth.route.js
 router.post('/logout', (req, res) => {
-  res.clearCookie('token').json({ msg: 'Sesión cerrada correctamente' });
+  res.clearCookie('token'); // o el nombre que uses
+  res.status(200).json({ message: 'Sesión cerrada correctamente' });
 });
 
 router.get("/me", verifyToken, getMe);
