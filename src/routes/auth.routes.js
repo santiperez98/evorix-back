@@ -4,7 +4,7 @@ const passport = require('../config/passport');
 const { register, login } = require('../controllers/auth.controller');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const verifyToken = require("../middlewares/authMiddleware.js");
+const checkAuth = require("../middlewares/checkAuth.js");
 const router = express.Router();
 const { getMe } = require("../controllers/auth.controller");
 // Register
@@ -90,7 +90,8 @@ router.post('/logout', (req, res) => {
   res.status(200).json({ message: 'Sesión cerrada correctamente' });
 });
 
-router.get("/me", verifyToken, getMe);
+router.get("/me", checkAuth, getMe);
+
 
 
 

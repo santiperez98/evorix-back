@@ -41,6 +41,8 @@ app.use(morgan("dev"));
 
 // Rutas
 app.use('/api/auth', authRoutes);
+
+
 app.use('/api/users', userRoutes);
 app.use('/api', dashboardRoutes); 
 // Sincronizar DB
