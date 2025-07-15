@@ -21,7 +21,7 @@ router.post(
 // Login
 router.post('/login', login);
 
-// Google login - inicio
+// Google log - inicio
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // Google callback
