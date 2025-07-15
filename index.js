@@ -32,7 +32,7 @@ app.use(passport.session());
 
 app.use(
   cors({
-    origin: "http://evorix.vercel.app/",
+    origin: "https://evorix.vercel.app/",
     credentials: true,
   })
 );
