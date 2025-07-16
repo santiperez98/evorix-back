@@ -7,13 +7,15 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:3001/api/auth/google/callback',
+      callbackURL:
+        process.env.NODE_ENV === 'production'
+          ? 'https://evorix-back.onrender.com/api/auth/google/callback'
+          : 'http://localhost:3001/api/auth/google/callback',
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
         let user = await User.findOne({ where: { googleId: profile.id } });
-
         if (!user) {
           user = await User.create({
             name: profile.displayName,
@@ -21,7 +23,6 @@ passport.use(
             googleId: profile.id,
           });
         }
-
         return done(null, user);
       } catch (err) {
         return done(err, null);
