@@ -14,7 +14,8 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cookieParser()); // 🥠 ANTES que session
+app.use(cookieParser()); 
+
 app.use(
   session({
     secret: 'secreto123',
@@ -30,9 +31,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// 💥 Configuración CORS para localhost y Vercel
 app.use(
   cors({
-    origin: "https://evorix.vercel.app",
+    origin: ["http://localhost:3000", "https://evorix.vercel.app"],
     credentials: true,
   })
 );
@@ -41,10 +43,9 @@ app.use(morgan("dev"));
 
 // Rutas
 app.use('/api/auth', authRoutes);
-
-
 app.use('/api/users', userRoutes);
 app.use('/api', dashboardRoutes); 
+
 // Sincronizar DB
 sequelize.sync({ alter: true })
   .then(() => {
