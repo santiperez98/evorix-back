@@ -1,3 +1,4 @@
+// middlewares/checkAuth.js
 const jwt = require("jsonwebtoken");
 
 const checkAuth = (req, res, next) => {
@@ -12,7 +13,7 @@ const checkAuth = (req, res, next) => {
 
   if (!token) {
     req.user = null;
-    return next(); // No hay token, pero continuamos
+    return next(); // No hay token, pero seguimos para que no corte la app
   }
 
   try {
@@ -20,7 +21,7 @@ const checkAuth = (req, res, next) => {
     req.user = decoded;
   } catch (err) {
     console.warn("Token inválido:", err.message);
-    req.user = null; // Token inválido, pero no cortamos
+    req.user = null; // Token inválido, pero seguimos
   }
 
   next();
