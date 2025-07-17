@@ -1,30 +1,26 @@
-// middlewares/checkAuth.js
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const checkAuth = (req, res, next) => {
-  let token = req.cookies.token;
-
-  if (!token && req.headers.authorization) {
-    const authHeader = req.headers.authorization;
-    if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
-    }
-  }
+const checkAuth = async (req, res, next) => {
+  const token = req.cookies.token;
 
   if (!token) {
-    req.user = null;
-    return next(); // No hay token, pero seguimos para que no corte la app
+    return res.status(401).json({ message: 'No autenticado' });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-  } catch (err) {
-    console.warn("Token inválido:", err.message);
-    req.user = null; // Token inválido, pero seguimos
-  }
 
-  next();
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no encontrado' });
+    }
+
+    req.user = user; // ✔️ Ahora req.user está definido
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
 };
 
 module.exports = checkAuth;
